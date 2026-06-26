@@ -66,6 +66,13 @@ export const permissions: GadgetPermissions = {
             run: true,
           },
         },
+        shopSetting: {
+          read: true,
+          actions: {
+            create: true,
+            update: true,
+          },
+        },
       },
     },
     unauthenticated: {
