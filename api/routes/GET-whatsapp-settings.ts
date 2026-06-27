@@ -35,7 +35,7 @@ export default async function route({ request, reply, api, logger }: RouteContex
 
     // 3. FIND THE SETTINGS
     const settings = await api.shopSetting.findFirst({
-      filter: { shop: { equals: shopRecord.id } } as any
+      filter: { shopId: { equals: shopRecord.id } } as any
     });
 
     if (!settings) {
