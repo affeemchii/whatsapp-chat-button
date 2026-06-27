@@ -3,7 +3,7 @@
 
   // Fetch settings from the endpoint and render the button if enabled
   function init() {
-    fetch('/api/whatsapp-settings')
+    fetch('https://whatsapp-chat-button--development.gadget.app/whatsapp-settings')
       .then(function (response) {
         if (!response.ok) {
           throw new Error('Network response was not ok');

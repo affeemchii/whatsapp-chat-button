@@ -1,7 +1,7 @@
 import { RouteContext } from "gadget-server";
 
 /**
- * Route handler for GET /api/whatsapp-settings
+ * Route handler for GET /whatsapp-settings
  * Serves settings for the storefront script.
  */
 export default async function route({ request, reply, api, logger }: RouteContext) {
