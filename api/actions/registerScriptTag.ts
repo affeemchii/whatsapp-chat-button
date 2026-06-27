@@ -24,7 +24,7 @@ export const run: GlobalActionRun = async ({ params, logger, api, connections })
       return { success: false, message: "Failed to get Shopify API client." };
     }
 
-    const scriptUrl = "https://whatsapp-chat-button--development.gadget.app/whatsapp-button.js";
+    const scriptUrl = "https://whatsapp-chat-button--development.gadget.app/web/public/whatsapp-button.js";
 
     // 3. Check if our script tag already exists by listing all script tags
     const scriptTags = await shopify.scriptTag.list();
