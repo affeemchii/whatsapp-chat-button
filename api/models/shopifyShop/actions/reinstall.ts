@@ -33,7 +33,7 @@ export const onSuccess: ActionOnSuccess = async ({ params, record, logger, api, 
   try {
     const shopify = connections.shopify.current;
     if (shopify) {
-      const scriptUrl = "https://whatsapp-chat-button--development.gadget.app/whatsapp-button.js";
+      const scriptUrl = "https://whatsapp-chat-button--development.gadget.app/web/public/whatsapp-button.js";
       const scriptTags = await shopify.scriptTag.list();
       const hasScriptTag = scriptTags.some((tag: any) => tag.src === scriptUrl);
       if (!hasScriptTag) {
