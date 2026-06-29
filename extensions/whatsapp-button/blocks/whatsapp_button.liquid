@@ -1,6 +1,7 @@
 {% if block.settings.whatsapp_number != blank %}
   {% comment %} 3. LIQUID/HTML OUTPUT: Normalize the phone number and construct URL {% endcomment %}
-  {% assign clean_number = block.settings.whatsapp_number | remove: ' ' | remove: '-' | remove: '(' | remove: ')' | remove: '+' %}
+  {% assign raw_number = block.settings.whatsapp_number | remove: ' ' | remove: '-' | remove: '(' | remove: ')' | remove: '+' %}
+  {% assign clean_number = block.settings.country_code | append: raw_number %}
   
   {% if block.settings.pre_filled_message != blank %}
     {% assign encoded_message = block.settings.pre_filled_message | url_encode %}
@@ -128,10 +129,52 @@
       "content": "WhatsApp Settings"
     },
     {
+      "id": "country_code",
+      "type": "select",
+      "label": "Country Code",
+      "info": "Select your country to automatically add the correct code",
+      "options": [
+        { "value": "1", "label": "🇺🇸 United States (+1)" },
+        { "value": "1", "label": "🇨🇦 Canada (+1)" },
+        { "value": "44", "label": "🇬🇧 United Kingdom (+44)" },
+        { "value": "92", "label": "🇵🇰 Pakistan (+92)" },
+        { "value": "91", "label": "🇮🇳 India (+91)" },
+        { "value": "971", "label": "🇦🇪 UAE (+971)" },
+        { "value": "966", "label": "🇸🇦 Saudi Arabia (+966)" },
+        { "value": "974", "label": "🇶🇦 Qatar (+974)" },
+        { "value": "965", "label": "🇰🇼 Kuwait (+965)" },
+        { "value": "973", "label": "🇧🇭 Bahrain (+973)" },
+        { "value": "968", "label": "🇴🇲 Oman (+968)" },
+        { "value": "61", "label": "🇦🇺 Australia (+61)" },
+        { "value": "49", "label": "🇩🇪 Germany (+49)" },
+        { "value": "33", "label": "🇫🇷 France (+33)" },
+        { "value": "39", "label": "🇮🇹 Italy (+39)" },
+        { "value": "34", "label": "🇪🇸 Spain (+34)" },
+        { "value": "31", "label": "🇳🇱 Netherlands (+31)" },
+        { "value": "90", "label": "🇹🇷 Turkey (+90)" },
+        { "value": "20", "label": "🇪🇬 Egypt (+20)" },
+        { "value": "27", "label": "🇿🇦 South Africa (+27)" },
+        { "value": "234", "label": "🇳🇬 Nigeria (+234)" },
+        { "value": "254", "label": "🇰🇪 Kenya (+254)" },
+        { "value": "55", "label": "🇧🇷 Brazil (+55)" },
+        { "value": "52", "label": "🇲🇽 Mexico (+52)" },
+        { "value": "57", "label": "🇨🇴 Colombia (+57)" },
+        { "value": "60", "label": "🇲🇾 Malaysia (+60)" },
+        { "value": "65", "label": "🇸🇬 Singapore (+65)" },
+        { "value": "62", "label": "🇮🇩 Indonesia (+62)" },
+        { "value": "63", "label": "🇵🇭 Philippines (+63)" },
+        { "value": "66", "label": "🇹🇭 Thailand (+66)" },
+        { "value": "880", "label": "🇧🇩 Bangladesh (+880)" },
+        { "value": "94", "label": "🇱🇰 Sri Lanka (+94)" },
+        { "value": "977", "label": "🇳🇵 Nepal (+977)" }
+      ],
+      "default": "1"
+    },
+    {
       "id": "whatsapp_number",
       "type": "text",
       "label": "WhatsApp Number",
-      "info": "Enter your full WhatsApp number with country code. Example: +12345678900"
+      "info": "Enter your number without country code or + symbol. Example: 3001234567"
     },
     {
       "id": "pre_filled_message",
