@@ -1,10 +1,69 @@
-import { useFindFirst } from "@gadgetinc/react";
+import { useState, useEffect } from "react";
+import { useFindFirst, useAction } from "@gadgetinc/react";
 import { api } from "../api";
 
 export default function Index() {
-  const [{ data: shop, fetching: loadingShop, error: shopError }] = useFindFirst(api.shopifyShop);
+  const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
 
-  if (loadingShop) {
+  const DEFAULT_HOURS = {
+    monday: { open: true, start: "09:00", end: "17:00" },
+    tuesday: { open: true, start: "09:00", end: "17:00" },
+    wednesday: { open: true, start: "09:00", end: "17:00" },
+    thursday: { open: true, start: "09:00", end: "17:00" },
+    friday: { open: true, start: "09:00", end: "17:00" },
+    saturday: { open: false, start: "10:00", end: "14:00" },
+    sunday: { open: false, start: "10:00", end: "14:00" },
+  };
+
+  const [businessHours, setBusinessHours] = useState(DEFAULT_HOURS);
+  const [hoursSaved, setHoursSaved] = useState(false);
+  const [hoursSaveError, setHoursSaveError] = useState<string | null>(null);
+
+  const [{ data: shop, fetching: loadingShop, error: shopError }] = useFindFirst(api.shopifyShop);
+  const [{ data: settings, fetching: loadingSettings, error: settingsError }] = useFindFirst(api.shopSetting);
+
+  const [{ fetching: updatingHours }, updateSetting] = useAction(api.shopSetting.update);
+  const [{ fetching: creatingHours }, createSetting] = useAction(api.shopSetting.create);
+
+  const isSaving = updatingHours || creatingHours;
+
+  useEffect(() => {
+    if (settings?.businessHours) {
+      setBusinessHours(settings.businessHours as typeof DEFAULT_HOURS);
+    }
+  }, [settings]);
+
+  const handleSaveHours = async () => {
+    setHoursSaved(false);
+    setHoursSaveError(null);
+    try {
+      if (settings?.id) {
+        await updateSetting({
+          id: settings.id,
+          shopSetting: { businessHours },
+        });
+      } else if (shop?.id) {
+        await createSetting({
+          shopSetting: {
+            businessHours,
+            shop: { _link: shop.id },
+          },
+        });
+      }
+      setHoursSaved(true);
+    } catch (err: any) {
+      setHoursSaveError(err.message || "Failed to save business hours");
+    }
+  };
+
+  const updateDay = (day: string, field: string, value: any) => {
+    setBusinessHours(prev => ({
+      ...prev,
+      [day]: { ...prev[day as keyof typeof DEFAULT_HOURS], [field]: value },
+    }));
+  };
+
+  if (loadingShop || loadingSettings) {
     return (
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "200px" }}>
         <s-spinner accessibility-label="Loading app details..." size="large" />
@@ -12,12 +71,13 @@ export default function Index() {
     );
   }
 
-  if (shopError) {
+  const loadError = shopError || settingsError;
+  if (loadError) {
     return (
       <s-page heading="WhatsApp Chat Button">
         <s-section>
           <s-banner tone="critical" heading="Error">
-            {shopError.message}
+            {loadError.message}
           </s-banner>
         </s-section>
       </s-page>
@@ -263,6 +323,104 @@ export default function Index() {
                 In the theme editor, click on the WhatsApp Chat Button embed and enter your number with country code
               </s-text>
             </div>
+          </div>
+        </div>
+      </s-section>
+
+      {/* Business Hours Section */}
+      <s-section>
+        <div style={{ marginTop: "16px", marginBottom: "32px" }}>
+          <div style={{ marginBottom: "16px" }}>
+            <s-heading>Business Hours</s-heading>
+            <div style={{ marginTop: "4px" }}>
+              <s-text color="subdued">
+                Set when you are available to chat. The button will show an offline message outside these hours.
+              </s-text>
+            </div>
+            {shop?.ianaTimezone && (
+              <div style={{ marginTop: "8px" }}>
+                <s-text>
+                  <strong>Store Timezone:</strong> {shop.ianaTimezone}
+                </s-text>
+              </div>
+            )}
+          </div>
+
+          {hoursSaved && (
+            <div style={{ marginBottom: "16px" }}>
+              <s-banner tone="success">
+                Business hours saved successfully!
+              </s-banner>
+            </div>
+          )}
+
+          {hoursSaveError && (
+            <div style={{ marginBottom: "16px" }}>
+              <s-banner tone="critical" heading="Error">
+                {hoursSaveError}
+              </s-banner>
+            </div>
+          )}
+
+          <div style={{ backgroundColor: "#ffffff", borderRadius: "12px", border: "1px solid #e1e3e5", padding: "16px 24px", marginBottom: "20px" }}>
+            {DAYS.map((day) => {
+              const dayHours = businessHours[day as keyof typeof DEFAULT_HOURS] || { open: false, start: "09:00", end: "17:00" };
+              const isDayOpen = dayHours.open;
+              const capitalizedDay = day.charAt(0).toUpperCase() + day.slice(1);
+              
+              return (
+                <div
+                  key={day}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "16px",
+                    padding: "12px 0",
+                    borderBottom: day === "sunday" ? "none" : "1px solid #e1e3e5",
+                    opacity: isDayOpen ? 1 : 0.6,
+                    transition: "opacity 0.2s ease",
+                  }}
+                >
+                  <div style={{ width: "100px", fontWeight: "500" }}>{capitalizedDay}</div>
+                  <s-checkbox
+                    {...({
+                      checked: isDayOpen,
+                      onChange: (e: any) => updateDay(day, "open", e.target.checked),
+                      label: "Open",
+                    } as any)}
+                  />
+                  {isDayOpen ? (
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <input
+                        type="time"
+                        value={dayHours.start}
+                        onChange={(e) => updateDay(day, "start", e.target.value)}
+                        style={{ padding: "6px 10px", borderRadius: "6px", border: "1px solid #c9cccf", fontSize: "14px", fontFamily: "inherit" }}
+                      />
+                      <s-text color="subdued">to</s-text>
+                      <input
+                        type="time"
+                        value={dayHours.end}
+                        onChange={(e) => updateDay(day, "end", e.target.value)}
+                        style={{ padding: "6px 10px", borderRadius: "6px", border: "1px solid #c9cccf", fontSize: "14px", fontFamily: "inherit" }}
+                      />
+                    </div>
+                  ) : (
+                    <s-text color="subdued">Closed</s-text>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div>
+            <s-button
+              variant="primary"
+              onClick={handleSaveHours}
+              disabled={isSaving}
+            >
+              {isSaving ? "Saving..." : "Save Business Hours"}
+            </s-button>
           </div>
         </div>
       </s-section>
