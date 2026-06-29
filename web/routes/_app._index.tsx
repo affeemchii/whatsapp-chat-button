@@ -50,7 +50,7 @@ const TIMEZONES = [
   { value: "Africa/Nairobi", label: "Nairobi (UTC+03:00)" },
   { value: "Africa/Casablanca", label: "Casablanca (UTC+01:00)" },
   { value: "Asia/Dubai", label: "Dubai (UTC+04:00)" },
-  { value: "Asia/Karachi", label: "Karachi (UTC+05:00)" },
+  { value: "Asia/Karachi", label: "Islamabad, Karachi (UTC+05:00)" },
   { value: "Asia/Kolkata", label: "Mumbai, Kolkata (UTC+05:30)" },
   { value: "Asia/Dhaka", label: "Dhaka (UTC+06:00)" },
   { value: "Asia/Colombo", label: "Colombo (UTC+05:30)" },
