@@ -90,6 +90,11 @@
       }
     {% endif %}
 
+    @keyframes whatsapp-popup-appear-{{ block.id }} {
+      from { opacity: 0; transform: translateY(8px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
     {% if block.settings.hide_on_mobile %}
       @media (max-width: 768px) {
         #whatsapp-container-{{ block.id }} {
@@ -132,15 +137,15 @@
     {% if block.settings.show_popup %}
       <div id="whatsapp-popup-{{ block.id }}" style="
         position: absolute;
-        bottom: 70px;
+        bottom: 68px;
         {% if block.settings.button_position == 'bottom-left' %}
           left: 0;
         {% else %}
           right: 0;
         {% endif %}
-        width: 300px;
+        width: 260px;
         background: white;
-        border-radius: 16px;
+        border-radius: 12px;
         box-shadow: 0 8px 32px rgba(0,0,0,0.15);
         padding: 0;
         overflow: hidden;
@@ -148,41 +153,37 @@
         z-index: 10000;
         box-sizing: border-box;
       ">
-        {/* Header div */}
         <div style="
           background: {{ block.settings.button_color }};
-          padding: 16px;
+          padding: 12px;
           display: flex;
           align-items: center;
           gap: 12px;
         ">
-          {/* Avatar circle */}
           <div style="
-            width: 40px;
-            height: 40px;
+            width: 32px;
+            height: 32px;
             background: rgba(255,255,255,0.2);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+            font-size: 16px;
           ">
             {{ block.settings.popup_avatar_emoji }}
           </div>
-          {/* Text div */}
           <div style="
             display: flex;
             flex-direction: column;
             text-align: left;
           ">
-            <div style="color: white; font-weight: 600; font-size: 14px; font-family: inherit;">
+            <div style="color: white; font-weight: 600; font-size: 13px; font-family: inherit;">
               {{ block.settings.popup_greeting | escape }}
             </div>
-            <div style="color: rgba(255,255,255,0.8); font-size: 12px; font-family: inherit;">
+            <div style="color: rgba(255,255,255,0.8); font-size: 11px; font-family: inherit;">
               Typically replies instantly
             </div>
           </div>
-          {/* Close button */}
           <button id="whatsapp-popup-close-{{ block.id }}" style="
             margin-left: auto;
             background: none;
@@ -197,21 +198,20 @@
           </button>
         </div>
 
-        {/* Body div */}
-        <div style="padding: 16px; text-align: left; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
-          <div style="font-size: 14px; color: #333; line-height: 1.5; margin-bottom: 16px; white-space: pre-wrap;">{{ block.settings.popup_message | escape }}</div>
+        <div style="padding: 12px; text-align: left; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+          <div style="font-size: 13px; color: #333; line-height: 1.5; margin-bottom: 12px; white-space: pre-wrap;">{{ block.settings.popup_message | escape }}</div>
           <a href="{{ whatsapp_url }}" target="_blank" rel="noopener noreferrer" style="
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
             width: 100%;
-            padding: 12px;
+            padding: 10px;
             background: {{ block.settings.button_color }};
             color: white;
             border: none;
             border-radius: 8px;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             cursor: pointer;
             text-align: center;
@@ -237,7 +237,13 @@
     if (btn && popup) {
       btn.addEventListener('click', function(e) {
         e.preventDefault();
-        popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
+        var isShowing = popup.style.display === 'block';
+        if (isShowing) {
+          popup.style.display = 'none';
+        } else {
+          popup.style.display = 'block';
+          popup.style.animation = 'whatsapp-popup-appear-{{ block.id }} 0.2s ease-out';
+        }
       });
     }
     
