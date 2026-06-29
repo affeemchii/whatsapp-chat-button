@@ -104,6 +104,7 @@ export default function Index() {
   const [businessHours, setBusinessHours] = useState(DEFAULT_HOURS);
   const [selectedTimezone, setSelectedTimezone] = useState<string>("");
   const [timezoneSearch, setTimezoneSearch] = useState<string>("");
+  const [showTimezoneDropdown, setShowTimezoneDropdown] = useState(false);
   const [hoursSaved, setHoursSaved] = useState(false);
   const [hoursSaveError, setHoursSaveError] = useState<string | null>(null);
 
@@ -123,6 +124,22 @@ export default function Index() {
       (settings as any)?.timezone || shop?.ianaTimezone || "UTC"
     );
   }, [settings, shop]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const dropdown = document.getElementById('timezone-dropdown-container');
+      if (dropdown && !dropdown.contains(e.target as Node)) {
+        setShowTimezoneDropdown(false);
+        setTimezoneSearch("");
+      }
+    };
+    if (showTimezoneDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showTimezoneDropdown]);
 
   const handleSaveHours = async () => {
     setHoursSaved(false);
@@ -452,55 +469,113 @@ export default function Index() {
 
           <div style={{ backgroundColor: "#ffffff", borderRadius: "12px", border: "1px solid #e1e3e5", padding: "24px", marginBottom: "20px" }}>
             {/* Timezone UI Selector */}
-            <div style={{ marginBottom: "20px", borderBottom: "1px solid #e1e3e5", paddingBottom: "20px" }}>
-              <div style={{ fontWeight: "600", marginBottom: "8px", fontSize: "14px" }}>
+            <div id="timezone-dropdown-container" style={{ marginBottom: "20px", position: "relative" }}>
+              <div style={{ fontWeight: "600", marginBottom: "4px", fontSize: "14px" }}>
                 Timezone
               </div>
-              <div style={{ color: "#6d7175", fontSize: "13px", marginBottom: "8px" }}>
-                Your store timezone from Shopify: {shop?.ianaTimezone || "Not detected"}
+              <div style={{ color: "#6d7175", fontSize: "12px", marginBottom: "8px" }}>
+                Shopify detected: {shop?.ianaTimezone || "Not detected"}
               </div>
-              <input
-                type="text"
-                placeholder="Search timezone..."
-                value={timezoneSearch}
-                onChange={(e: any) => setTimezoneSearch(e.target.value)}
+              
+              {/* Selected timezone display - clicking opens dropdown */}
+              <div
+                onClick={() => setShowTimezoneDropdown(!showTimezoneDropdown)}
                 style={{
-                  width: "100%",
                   padding: "8px 12px",
                   borderRadius: "6px",
                   border: "1px solid #c9cccf",
                   fontSize: "14px",
-                  marginBottom: "8px",
-                  boxSizing: "border-box"
-                }}
-              />
-              <select
-                value={selectedTimezone}
-                onChange={(e: any) => setSelectedTimezone(e.target.value)}
-                size={5}
-                style={{
-                  width: "100%",
-                  padding: "4px",
-                  borderRadius: "6px",
-                  border: "1px solid #c9cccf",
-                  fontSize: "13px",
+                  cursor: "pointer",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  backgroundColor: "white",
+                  userSelect: "none"
                 }}
               >
-                {TIMEZONES
-                  .filter(tz => 
-                    tz.label.toLowerCase().includes(timezoneSearch.toLowerCase()) ||
-                    tz.value.toLowerCase().includes(timezoneSearch.toLowerCase())
-                  )
-                  .map(tz => (
-                    <option key={tz.value} value={tz.value}>
-                      {tz.label}
-                    </option>
-                  ))
-                }
-              </select>
-              <div style={{ fontSize: "12px", color: "#6d7175", marginTop: "6px" }}>
-                Selected: {TIMEZONES.find(tz => tz.value === selectedTimezone)?.label || selectedTimezone}
+                <span>
+                  {TIMEZONES.find(tz => tz.value === selectedTimezone)?.label || selectedTimezone || "Select timezone..."}
+                </span>
+                <span style={{ fontSize: "10px", color: "#6d7175" }}>
+                  {showTimezoneDropdown ? "▲" : "▼"}
+                </span>
               </div>
+
+              {/* Dropdown panel */}
+              {showTimezoneDropdown && (
+                <div style={{
+                  position: "absolute",
+                  top: "100%",
+                  left: 0,
+                  right: 0,
+                  backgroundColor: "white",
+                  border: "1px solid #c9cccf",
+                  borderRadius: "6px",
+                  boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
+                  zIndex: 1000,
+                  marginTop: "4px"
+                }}>
+                  {/* Search input inside dropdown */}
+                  <div style={{ padding: "8px" }}>
+                    <input
+                      type="text"
+                      placeholder="Search timezone..."
+                      value={timezoneSearch}
+                      onChange={(e: any) => setTimezoneSearch(e.target.value)}
+                      autoFocus
+                      style={{
+                        width: "100%",
+                        padding: "6px 10px",
+                        borderRadius: "4px",
+                        border: "1px solid #c9cccf",
+                        fontSize: "13px",
+                        boxSizing: "border-box",
+                        outline: "none"
+                      }}
+                    />
+                  </div>
+
+                  {/* Timezone options list */}
+                  <div style={{ maxHeight: "200px", overflowY: "auto" }}>
+                    {TIMEZONES
+                      .filter(tz =>
+                        tz.label.toLowerCase().includes(timezoneSearch.toLowerCase()) ||
+                        tz.value.toLowerCase().includes(timezoneSearch.toLowerCase())
+                      )
+                      .map(tz => (
+                        <div
+                          key={tz.value}
+                          onClick={() => {
+                            setSelectedTimezone(tz.value);
+                            setShowTimezoneDropdown(false);
+                            setTimezoneSearch("");
+                          }}
+                          style={{
+                            padding: "8px 12px",
+                            fontSize: "13px",
+                            cursor: "pointer",
+                            backgroundColor: selectedTimezone === tz.value ? "#f0faf0" : "transparent",
+                            color: selectedTimezone === tz.value ? "#008060" : "#333",
+                            fontWeight: selectedTimezone === tz.value ? "600" : "normal",
+                          }}
+                          onMouseEnter={(e: any) => {
+                            if (selectedTimezone !== tz.value) {
+                              e.currentTarget.style.backgroundColor = "#f6f6f7";
+                            }
+                          }}
+                          onMouseLeave={(e: any) => {
+                            if (selectedTimezone !== tz.value) {
+                              e.currentTarget.style.backgroundColor = "transparent";
+                            }
+                          }}
+                        >
+                          {tz.label}
+                        </div>
+                      ))
+                    }
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Business Hours Days */}
