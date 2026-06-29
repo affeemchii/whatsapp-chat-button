@@ -1,7 +1,9 @@
 {% if block.settings.whatsapp_number != blank %}
   {% comment %} 3. LIQUID/HTML OUTPUT: Normalize the phone number and construct URL {% endcomment %}
   {% assign raw_number = block.settings.whatsapp_number | remove: ' ' | remove: '-' | remove: '(' | remove: ')' | remove: '+' %}
-  {% assign clean_number = block.settings.country_code | append: raw_number %}
+  {% assign country_code_parts = block.settings.country_code | split: '-' %}
+  {% assign numeric_code = country_code_parts | first %}
+  {% assign clean_number = numeric_code | append: raw_number %}
   
   {% if block.settings.pre_filled_message != blank %}
     {% assign encoded_message = block.settings.pre_filled_message | url_encode %}
@@ -134,8 +136,8 @@
       "label": "Country Code",
       "info": "Select your country to automatically add the correct code",
       "options": [
-        { "value": "1", "label": "🇺🇸 United States (+1)" },
-        { "value": "1", "label": "🇨🇦 Canada (+1)" },
+        { "value": "1-us", "label": "🇺🇸 United States (+1)" },
+        { "value": "1-ca", "label": "🇨🇦 Canada (+1)" },
         { "value": "44", "label": "🇬🇧 United Kingdom (+44)" },
         { "value": "92", "label": "🇵🇰 Pakistan (+92)" },
         { "value": "91", "label": "🇮🇳 India (+91)" },
@@ -168,7 +170,7 @@
         { "value": "94", "label": "🇱🇰 Sri Lanka (+94)" },
         { "value": "977", "label": "🇳🇵 Nepal (+977)" }
       ],
-      "default": "1"
+      "default": "1-us"
     },
     {
       "id": "whatsapp_number",
