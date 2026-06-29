@@ -2,6 +2,92 @@ import { useState, useEffect } from "react";
 import { useFindFirst, useAction } from "@gadgetinc/react";
 import { api } from "../api";
 
+const TIMEZONES = [
+  { value: "Pacific/Honolulu", label: "Hawaii (UTC-10:00)" },
+  { value: "America/Anchorage", label: "Alaska (UTC-09:00)" },
+  { value: "America/Los_Angeles", label: "Pacific Time - US & Canada (UTC-08:00)" },
+  { value: "America/Denver", label: "Mountain Time - US & Canada (UTC-07:00)" },
+  { value: "America/Phoenix", label: "Arizona (UTC-07:00)" },
+  { value: "America/Chicago", label: "Central Time - US & Canada (UTC-06:00)" },
+  { value: "America/New_York", label: "Eastern Time - US & Canada (UTC-05:00)" },
+  { value: "America/Halifax", label: "Atlantic Time - Canada (UTC-04:00)" },
+  { value: "America/St_Johns", label: "Newfoundland (UTC-03:30)" },
+  { value: "America/Sao_Paulo", label: "Brasilia (UTC-03:00)" },
+  { value: "America/Argentina/Buenos_Aires", label: "Buenos Aires (UTC-03:00)" },
+  { value: "America/Santiago", label: "Santiago (UTC-03:00)" },
+  { value: "America/Bogota", label: "Bogota (UTC-05:00)" },
+  { value: "America/Lima", label: "Lima (UTC-05:00)" },
+  { value: "America/Mexico_City", label: "Mexico City (UTC-06:00)" },
+  { value: "America/Toronto", label: "Toronto (UTC-05:00)" },
+  { value: "America/Vancouver", label: "Vancouver (UTC-08:00)" },
+  { value: "Atlantic/Reykjavik", label: "Reykjavik (UTC+00:00)" },
+  { value: "Europe/London", label: "London (UTC+00:00)" },
+  { value: "Europe/Dublin", label: "Dublin (UTC+00:00)" },
+  { value: "Europe/Lisbon", label: "Lisbon (UTC+00:00)" },
+  { value: "Europe/Paris", label: "Paris (UTC+01:00)" },
+  { value: "Europe/Berlin", label: "Berlin (UTC+01:00)" },
+  { value: "Europe/Rome", label: "Rome (UTC+01:00)" },
+  { value: "Europe/Madrid", label: "Madrid (UTC+01:00)" },
+  { value: "Europe/Amsterdam", label: "Amsterdam (UTC+01:00)" },
+  { value: "Europe/Brussels", label: "Brussels (UTC+01:00)" },
+  { value: "Europe/Stockholm", label: "Stockholm (UTC+01:00)" },
+  { value: "Europe/Oslo", label: "Oslo (UTC+01:00)" },
+  { value: "Europe/Copenhagen", label: "Copenhagen (UTC+01:00)" },
+  { value: "Europe/Zurich", label: "Zurich (UTC+01:00)" },
+  { value: "Europe/Vienna", label: "Vienna (UTC+01:00)" },
+  { value: "Europe/Warsaw", label: "Warsaw (UTC+01:00)" },
+  { value: "Europe/Prague", label: "Prague (UTC+01:00)" },
+  { value: "Europe/Budapest", label: "Budapest (UTC+01:00)" },
+  { value: "Europe/Bucharest", label: "Bucharest (UTC+02:00)" },
+  { value: "Europe/Helsinki", label: "Helsinki (UTC+02:00)" },
+  { value: "Europe/Athens", label: "Athens (UTC+02:00)" },
+  { value: "Europe/Kiev", label: "Kyiv (UTC+02:00)" },
+  { value: "Europe/Istanbul", label: "Istanbul (UTC+03:00)" },
+  { value: "Europe/Moscow", label: "Moscow (UTC+03:00)" },
+  { value: "Africa/Cairo", label: "Cairo (UTC+02:00)" },
+  { value: "Africa/Johannesburg", label: "Johannesburg (UTC+02:00)" },
+  { value: "Africa/Lagos", label: "Lagos (UTC+01:00)" },
+  { value: "Africa/Nairobi", label: "Nairobi (UTC+03:00)" },
+  { value: "Africa/Casablanca", label: "Casablanca (UTC+01:00)" },
+  { value: "Asia/Dubai", label: "Dubai (UTC+04:00)" },
+  { value: "Asia/Karachi", label: "Karachi (UTC+05:00)" },
+  { value: "Asia/Kolkata", label: "Mumbai, Kolkata (UTC+05:30)" },
+  { value: "Asia/Dhaka", label: "Dhaka (UTC+06:00)" },
+  { value: "Asia/Colombo", label: "Colombo (UTC+05:30)" },
+  { value: "Asia/Kathmandu", label: "Kathmandu (UTC+05:45)" },
+  { value: "Asia/Almaty", label: "Almaty (UTC+06:00)" },
+  { value: "Asia/Yangon", label: "Yangon (UTC+06:30)" },
+  { value: "Asia/Bangkok", label: "Bangkok (UTC+07:00)" },
+  { value: "Asia/Jakarta", label: "Jakarta (UTC+07:00)" },
+  { value: "Asia/Singapore", label: "Singapore (UTC+08:00)" },
+  { value: "Asia/Kuala_Lumpur", label: "Kuala Lumpur (UTC+08:00)" },
+  { value: "Asia/Manila", label: "Manila (UTC+08:00)" },
+  { value: "Asia/Shanghai", label: "Beijing, Shanghai (UTC+08:00)" },
+  { value: "Asia/Hong_Kong", label: "Hong Kong (UTC+08:00)" },
+  { value: "Asia/Taipei", label: "Taipei (UTC+08:00)" },
+  { value: "Asia/Seoul", label: "Seoul (UTC+09:00)" },
+  { value: "Asia/Tokyo", label: "Tokyo (UTC+09:00)" },
+  { value: "Asia/Riyadh", label: "Riyadh (UTC+03:00)" },
+  { value: "Asia/Kuwait", label: "Kuwait (UTC+03:00)" },
+  { value: "Asia/Qatar", label: "Qatar (UTC+03:00)" },
+  { value: "Asia/Bahrain", label: "Bahrain (UTC+03:00)" },
+  { value: "Asia/Muscat", label: "Muscat (UTC+04:00)" },
+  { value: "Asia/Beirut", label: "Beirut (UTC+02:00)" },
+  { value: "Asia/Jerusalem", label: "Jerusalem (UTC+02:00)" },
+  { value: "Asia/Tehran", label: "Tehran (UTC+03:30)" },
+  { value: "Asia/Kabul", label: "Kabul (UTC+04:30)" },
+  { value: "Asia/Tashkent", label: "Tashkent (UTC+05:00)" },
+  { value: "Australia/Perth", label: "Perth (UTC+08:00)" },
+  { value: "Australia/Darwin", label: "Darwin (UTC+09:30)" },
+  { value: "Australia/Adelaide", label: "Adelaide (UTC+09:30)" },
+  { value: "Australia/Sydney", label: "Sydney (UTC+10:00)" },
+  { value: "Australia/Melbourne", label: "Melbourne (UTC+10:00)" },
+  { value: "Australia/Brisbane", label: "Brisbane (UTC+10:00)" },
+  { value: "Pacific/Auckland", label: "Auckland (UTC+12:00)" },
+  { value: "Pacific/Fiji", label: "Fiji (UTC+12:00)" },
+  { value: "UTC", label: "UTC (UTC+00:00)" }
+];
+
 export default function Index() {
   const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
 
@@ -16,6 +102,8 @@ export default function Index() {
   };
 
   const [businessHours, setBusinessHours] = useState(DEFAULT_HOURS);
+  const [selectedTimezone, setSelectedTimezone] = useState<string>("");
+  const [timezoneSearch, setTimezoneSearch] = useState<string>("");
   const [hoursSaved, setHoursSaved] = useState(false);
   const [hoursSaveError, setHoursSaveError] = useState<string | null>(null);
 
@@ -31,7 +119,10 @@ export default function Index() {
     if (settings?.businessHours) {
       setBusinessHours(settings.businessHours as typeof DEFAULT_HOURS);
     }
-  }, [settings]);
+    setSelectedTimezone(
+      (settings as any)?.timezone || shop?.ianaTimezone || "UTC"
+    );
+  }, [settings, shop]);
 
   const handleSaveHours = async () => {
     setHoursSaved(false);
@@ -40,14 +131,18 @@ export default function Index() {
       if (settings?.id) {
         await updateSetting({
           id: settings.id,
-          shopSetting: { businessHours },
+          shopSetting: {
+            businessHours,
+            timezone: selectedTimezone,
+          } as any,
         });
       } else if (shop?.id) {
         await createSetting({
           shopSetting: {
             businessHours,
+            timezone: selectedTimezone,
             shop: { _link: shop.id },
-          },
+          } as any,
         });
       }
       setHoursSaved(true);
@@ -337,13 +432,6 @@ export default function Index() {
                 Set when you are available to chat. The button will show an offline message outside these hours.
               </s-text>
             </div>
-            {shop?.ianaTimezone && (
-              <div style={{ marginTop: "8px" }}>
-                <s-text>
-                  <strong>Store Timezone:</strong> {shop.ianaTimezone}
-                </s-text>
-              </div>
-            )}
           </div>
 
           {hoursSaved && (
@@ -362,7 +450,60 @@ export default function Index() {
             </div>
           )}
 
-          <div style={{ backgroundColor: "#ffffff", borderRadius: "12px", border: "1px solid #e1e3e5", padding: "16px 24px", marginBottom: "20px" }}>
+          <div style={{ backgroundColor: "#ffffff", borderRadius: "12px", border: "1px solid #e1e3e5", padding: "24px", marginBottom: "20px" }}>
+            {/* Timezone UI Selector */}
+            <div style={{ marginBottom: "20px", borderBottom: "1px solid #e1e3e5", paddingBottom: "20px" }}>
+              <div style={{ fontWeight: "600", marginBottom: "8px", fontSize: "14px" }}>
+                Timezone
+              </div>
+              <div style={{ color: "#6d7175", fontSize: "13px", marginBottom: "8px" }}>
+                Your store timezone from Shopify: {shop?.ianaTimezone || "Not detected"}
+              </div>
+              <input
+                type="text"
+                placeholder="Search timezone..."
+                value={timezoneSearch}
+                onChange={(e: any) => setTimezoneSearch(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  borderRadius: "6px",
+                  border: "1px solid #c9cccf",
+                  fontSize: "14px",
+                  marginBottom: "8px",
+                  boxSizing: "border-box"
+                }}
+              />
+              <select
+                value={selectedTimezone}
+                onChange={(e: any) => setSelectedTimezone(e.target.value)}
+                size={5}
+                style={{
+                  width: "100%",
+                  padding: "4px",
+                  borderRadius: "6px",
+                  border: "1px solid #c9cccf",
+                  fontSize: "13px",
+                }}
+              >
+                {TIMEZONES
+                  .filter(tz => 
+                    tz.label.toLowerCase().includes(timezoneSearch.toLowerCase()) ||
+                    tz.value.toLowerCase().includes(timezoneSearch.toLowerCase())
+                  )
+                  .map(tz => (
+                    <option key={tz.value} value={tz.value}>
+                      {tz.label}
+                    </option>
+                  ))
+                }
+              </select>
+              <div style={{ fontSize: "12px", color: "#6d7175", marginTop: "6px" }}>
+                Selected: {TIMEZONES.find(tz => tz.value === selectedTimezone)?.label || selectedTimezone}
+              </div>
+            </div>
+
+            {/* Business Hours Days */}
             {DAYS.map((day) => {
               const dayHours = businessHours[day as keyof typeof DEFAULT_HOURS] || { open: false, start: "09:00", end: "17:00" };
               const isDayOpen = dayHours.open;
