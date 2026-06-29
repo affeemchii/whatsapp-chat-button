@@ -7,6 +7,7 @@ export const schema: GadgetModel = {
   type: "gadget/model-schema/v2",
   storageKey: "JDQTfOyNb4EJ",
   fields: {
+    businessHours: { type: "json", storageKey: "lcZy_gqv0oIa" },
     buttonColor: {
       type: "string",
       default: "#25D366 ",
