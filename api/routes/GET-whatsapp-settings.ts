@@ -1,5 +1,39 @@
 import { RouteContext } from "gadget-server";
 
+function isStoreOpen(businessHours: any, timezone: string): boolean {
+  try {
+    // Get current time in merchant's timezone
+    const now = new Date();
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      weekday: 'long',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+    
+    const parts = formatter.formatToParts(now);
+    const weekday = parts.find(p => p.type === 'weekday')?.value?.toLowerCase();
+    const hour = parts.find(p => p.type === 'hour')?.value;
+    const minute = parts.find(p => p.type === 'minute')?.value;
+    
+    if (!weekday || !hour || !minute) return true;
+    
+    const daySchedule = businessHours[weekday];
+    if (!daySchedule || !daySchedule.open) return false;
+    
+    const currentMinutes = parseInt(hour) * 60 + parseInt(minute);
+    const [startHour, startMin] = daySchedule.start.split(':').map(Number);
+    const [endHour, endMin] = daySchedule.end.split(':').map(Number);
+    const startMinutes = startHour * 60 + startMin;
+    const endMinutes = endHour * 60 + endMin;
+    
+    return currentMinutes >= startMinutes && currentMinutes < endMinutes;
+  } catch {
+    return true; // If anything fails, assume open
+  }
+}
+
 /**
  * Route handler for GET /whatsapp-settings
  * Serves settings for the storefront script.
@@ -44,11 +78,17 @@ export default async function route({ request, reply, api, logger }: RouteContex
     }
 
     // 4. RETURN THE RESPONSE
+    const timezone = (settings as any).timezone || shopRecord.ianaTimezone || "UTC";
+    const businessHours = (settings as any).businessHours;
+    const storeIsOpen = businessHours ? isStoreOpen(businessHours, timezone) : true;
+
     await reply.send({
       isEnabled: settings.isEnabled,
       whatsappNumber: settings.whatsappNumber,
       buttonColor: settings.buttonColor,
-      buttonPosition: settings.buttonPosition
+      buttonPosition: settings.buttonPosition,
+      isOpen: storeIsOpen,
+      timezone: timezone
     });
   } catch (error) {
     logger.error({ error }, "Error serving WhatsApp settings");
