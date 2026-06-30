@@ -261,6 +261,34 @@
       }
     });
   })();
+
+  (function() {
+    var button = document.getElementById('whatsapp-btn-{{ block.id }}') || 
+                 document.querySelector('#whatsapp-container-{{ block.id }} a');
+    var apiUrl = "https://whatsapp-chat-button--development.gadget.app/whatsapp-settings?shop=" + encodeURIComponent("{{ shop.permanent_domain }}");
+    
+    fetch(apiUrl)
+      .then(function(response) { return response.json(); })
+      .then(function(data) {
+        if (data && data.isOpen === false && button) {
+          // Store is closed - change button to grey and update behavior
+          button.style.backgroundColor = "#9e9e9e";
+          button.setAttribute('data-offline', 'true');
+          
+          // Add offline badge
+          var badge = document.createElement('div');
+          badge.textContent = "We're offline";
+          badge.style.cssText = "position: absolute; top: -8px; right: -8px; background: #d9534f; color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px; white-space: nowrap; font-family: -apple-system, sans-serif;";
+          if (button.parentElement) {
+            button.parentElement.style.position = "relative";
+            button.parentElement.appendChild(badge);
+          }
+        }
+      })
+      .catch(function() {
+        // Fail silently, button stays in default state
+      });
+  })();
   </script>
 {% endif %}
 
