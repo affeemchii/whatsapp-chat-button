@@ -80,7 +80,8 @@ export default async function route({ request, reply, api, logger }: RouteContex
     // 4. RETURN THE RESPONSE
     const timezone = (settings as any).timezone || shopRecord.ianaTimezone || "UTC";
     const businessHours = (settings as any).businessHours;
-    const storeIsOpen = businessHours ? isStoreOpen(businessHours, timezone) : true;
+    const businessHoursEnabled = (settings as any).businessHoursEnabled === true;
+    const storeIsOpen = (businessHoursEnabled && businessHours) ? isStoreOpen(businessHours, timezone) : true;
 
     await reply.send({
       isEnabled: settings.isEnabled,

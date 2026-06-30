@@ -105,6 +105,7 @@ export default function Index() {
   const [selectedTimezone, setSelectedTimezone] = useState<string>("");
   const [timezoneSearch, setTimezoneSearch] = useState<string>("");
   const [showTimezoneDropdown, setShowTimezoneDropdown] = useState(false);
+  const [businessHoursEnabled, setBusinessHoursEnabled] = useState(false);
   const [hoursSaved, setHoursSaved] = useState(false);
   const [hoursSaveError, setHoursSaveError] = useState<string | null>(null);
 
@@ -123,6 +124,7 @@ export default function Index() {
     setSelectedTimezone(
       (settings as any)?.timezone || shop?.ianaTimezone || "UTC"
     );
+    setBusinessHoursEnabled((settings as any)?.businessHoursEnabled === true);
   }, [settings, shop]);
 
   useEffect(() => {
@@ -151,6 +153,7 @@ export default function Index() {
           shopSetting: {
             businessHours,
             timezone: selectedTimezone,
+            businessHoursEnabled: businessHoursEnabled,
           } as any,
         });
       } else if (shop?.id) {
@@ -158,6 +161,7 @@ export default function Index() {
           shopSetting: {
             businessHours,
             timezone: selectedTimezone,
+            businessHoursEnabled: businessHoursEnabled,
             shop: { _link: shop.id },
           } as any,
         });
@@ -468,165 +472,212 @@ export default function Index() {
           )}
 
           <div style={{ backgroundColor: "#ffffff", borderRadius: "12px", border: "1px solid #e1e3e5", padding: "24px", marginBottom: "20px" }}>
-            {/* Timezone UI Selector */}
-            <div id="timezone-dropdown-container" style={{ marginBottom: "20px", position: "relative" }}>
-              <div style={{ fontWeight: "600", marginBottom: "4px", fontSize: "14px" }}>
-                Timezone
-              </div>
-              <div style={{ color: "#6d7175", fontSize: "12px", marginBottom: "8px" }}>
-                Shopify detected: {shop?.ianaTimezone || "Not detected"}
-              </div>
-              
-              {/* Selected timezone display - clicking opens dropdown */}
-              <div
-                onClick={() => setShowTimezoneDropdown(!showTimezoneDropdown)}
-                style={{
-                  padding: "8px 12px",
-                  borderRadius: "6px",
-                  border: "1px solid #c9cccf",
-                  fontSize: "14px",
-                  cursor: "pointer",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  backgroundColor: "white",
-                  userSelect: "none"
-                }}
-              >
-                <span>
-                  {TIMEZONES.find(tz => tz.value === selectedTimezone)?.label || selectedTimezone || "Select timezone..."}
-                </span>
-                <span style={{ fontSize: "10px", color: "#6d7175" }}>
-                  {showTimezoneDropdown ? "▲" : "▼"}
-                </span>
-              </div>
-
-              {/* Dropdown panel */}
-              {showTimezoneDropdown && (
-                <div style={{
-                  position: "absolute",
-                  top: "100%",
-                  left: 0,
-                  right: 0,
-                  backgroundColor: "white",
-                  border: "1px solid #c9cccf",
-                  borderRadius: "6px",
-                  boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
-                  zIndex: 1000,
-                  marginTop: "4px"
-                }}>
-                  {/* Search input inside dropdown */}
-                  <div style={{ padding: "8px" }}>
-                    <input
-                      type="text"
-                      placeholder="Search timezone..."
-                      value={timezoneSearch}
-                      onChange={(e: any) => setTimezoneSearch(e.target.value)}
-                      autoFocus
-                      style={{
-                        width: "100%",
-                        padding: "6px 10px",
-                        borderRadius: "4px",
-                        border: "1px solid #c9cccf",
-                        fontSize: "13px",
-                        boxSizing: "border-box",
-                        outline: "none"
-                      }}
-                    />
-                  </div>
-
-                  {/* Timezone options list */}
-                  <div style={{ maxHeight: "200px", overflowY: "auto" }}>
-                    {TIMEZONES
-                      .filter(tz =>
-                        tz.label.toLowerCase().includes(timezoneSearch.toLowerCase()) ||
-                        tz.value.toLowerCase().includes(timezoneSearch.toLowerCase())
-                      )
-                      .map(tz => (
-                        <div
-                          key={tz.value}
-                          onClick={() => {
-                            setSelectedTimezone(tz.value);
-                            setShowTimezoneDropdown(false);
-                            setTimezoneSearch("");
-                          }}
-                          style={{
-                            padding: "8px 12px",
-                            fontSize: "13px",
-                            cursor: "pointer",
-                            backgroundColor: selectedTimezone === tz.value ? "#f0faf0" : "transparent",
-                            color: selectedTimezone === tz.value ? "#008060" : "#333",
-                            fontWeight: selectedTimezone === tz.value ? "600" : "normal",
-                          }}
-                          onMouseEnter={(e: any) => {
-                            if (selectedTimezone !== tz.value) {
-                              e.currentTarget.style.backgroundColor = "#f6f6f7";
-                            }
-                          }}
-                          onMouseLeave={(e: any) => {
-                            if (selectedTimezone !== tz.value) {
-                              e.currentTarget.style.backgroundColor = "transparent";
-                            }
-                          }}
-                        >
-                          {tz.label}
-                        </div>
-                      ))
-                    }
-                  </div>
+            {/* Enable Business Hours Toggle */}
+            <div style={{ 
+              display: "flex", 
+              alignItems: "center", 
+              justifyContent: "space-between",
+              padding: "12px 16px",
+              backgroundColor: "#f6f6f7",
+              borderRadius: "8px",
+              marginBottom: "20px"
+            }}>
+              <div>
+                <div style={{ fontWeight: "600", fontSize: "14px" }}>Use Business Hours</div>
+                <div style={{ fontSize: "12px", color: "#6d7175", marginTop: "2px" }}>
+                  Turn this off if you offer 24/7 support. The button will always 
+                  appear active and never show as offline.
                 </div>
-              )}
+              </div>
+              <label style={{ position: "relative", display: "inline-block", width: "44px", height: "24px" }}>
+                <input
+                  type="checkbox"
+                  checked={businessHoursEnabled}
+                  onChange={(e: any) => setBusinessHoursEnabled(e.target.checked)}
+                  style={{ opacity: 0, width: 0, height: 0 }}
+                />
+                <span style={{
+                  position: "absolute", cursor: "pointer", top: 0, left: 0, right: 0, bottom: 0,
+                  backgroundColor: businessHoursEnabled ? "#008060" : "#c9cccf",
+                  borderRadius: "24px",
+                  transition: "0.2s"
+                }}>
+                  <span style={{
+                    position: "absolute",
+                    height: "18px", width: "18px",
+                    left: businessHoursEnabled ? "23px" : "3px",
+                    bottom: "3px",
+                    backgroundColor: "white",
+                    borderRadius: "50%",
+                    transition: "0.2s"
+                  }} />
+                </span>
+              </label>
             </div>
 
-            {/* Business Hours Days */}
-            {DAYS.map((day) => {
-              const dayHours = businessHours[day as keyof typeof DEFAULT_HOURS] || { open: false, start: "09:00", end: "17:00" };
-              const isDayOpen = dayHours.open;
-              const capitalizedDay = day.charAt(0).toUpperCase() + day.slice(1);
-              
-              return (
-                <div
-                  key={day}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "16px",
-                    padding: "12px 0",
-                    borderBottom: day === "sunday" ? "none" : "1px solid #e1e3e5",
-                    opacity: isDayOpen ? 1 : 0.6,
-                    transition: "opacity 0.2s ease",
-                  }}
-                >
-                  <div style={{ width: "100px", fontWeight: "500" }}>{capitalizedDay}</div>
-                  <s-checkbox
-                    {...({
-                      checked: isDayOpen,
-                      onChange: (e: any) => updateDay(day, "open", e.target.checked),
-                      label: "Open",
-                    } as any)}
-                  />
-                  {isDayOpen ? (
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <input
-                        type="time"
-                        value={dayHours.start}
-                        onChange={(e) => updateDay(day, "start", e.target.value)}
-                        style={{ padding: "6px 10px", borderRadius: "6px", border: "1px solid #c9cccf", fontSize: "14px", fontFamily: "inherit" }}
-                      />
-                      <s-text color="subdued">to</s-text>
-                      <input
-                        type="time"
-                        value={dayHours.end}
-                        onChange={(e) => updateDay(day, "end", e.target.value)}
-                        style={{ padding: "6px 10px", borderRadius: "6px", border: "1px solid #c9cccf", fontSize: "14px", fontFamily: "inherit" }}
-                      />
+            {businessHoursEnabled && (
+              <>
+                {/* Timezone UI Selector */}
+                <div id="timezone-dropdown-container" style={{ marginBottom: "20px", position: "relative" }}>
+                  <div style={{ fontWeight: "600", marginBottom: "4px", fontSize: "14px" }}>
+                    Timezone
+                  </div>
+                  <div style={{ color: "#6d7175", fontSize: "12px", marginBottom: "8px" }}>
+                    Shopify detected: {shop?.ianaTimezone || "Not detected"}
+                  </div>
+                  
+                  {/* Selected timezone display - clicking opens dropdown */}
+                  <div
+                    onClick={() => setShowTimezoneDropdown(!showTimezoneDropdown)}
+                    style={{
+                      padding: "8px 12px",
+                      borderRadius: "6px",
+                      border: "1px solid #c9cccf",
+                      fontSize: "14px",
+                      cursor: "pointer",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      backgroundColor: "white",
+                      userSelect: "none"
+                    }}
+                  >
+                    <span>
+                      {TIMEZONES.find(tz => tz.value === selectedTimezone)?.label || selectedTimezone || "Select timezone..."}
+                    </span>
+                    <span style={{ fontSize: "10px", color: "#6d7175" }}>
+                      {showTimezoneDropdown ? "▲" : "▼"}
+                    </span>
+                  </div>
+
+                  {/* Dropdown panel */}
+                  {showTimezoneDropdown && (
+                    <div style={{
+                      position: "absolute",
+                      top: "100%",
+                      left: 0,
+                      right: 0,
+                      backgroundColor: "white",
+                      border: "1px solid #c9cccf",
+                      borderRadius: "6px",
+                      boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
+                      zIndex: 1000,
+                      marginTop: "4px"
+                    }}>
+                      {/* Search input inside dropdown */}
+                      <div style={{ padding: "8px" }}>
+                        <input
+                          type="text"
+                          placeholder="Search timezone..."
+                          value={timezoneSearch}
+                          onChange={(e: any) => setTimezoneSearch(e.target.value)}
+                          autoFocus
+                          style={{
+                            width: "100%",
+                            padding: "6px 10px",
+                            borderRadius: "4px",
+                            border: "1px solid #c9cccf",
+                            fontSize: "13px",
+                            boxSizing: "border-box",
+                            outline: "none"
+                          }}
+                        />
+                      </div>
+
+                      {/* Timezone options list */}
+                      <div style={{ maxHeight: "200px", overflowY: "auto" }}>
+                        {TIMEZONES
+                          .filter(tz =>
+                            tz.label.toLowerCase().includes(timezoneSearch.toLowerCase()) ||
+                            tz.value.toLowerCase().includes(timezoneSearch.toLowerCase())
+                          )
+                          .map(tz => (
+                            <div
+                              key={tz.value}
+                              onClick={() => {
+                                setSelectedTimezone(tz.value);
+                                setShowTimezoneDropdown(false);
+                                setTimezoneSearch("");
+                              }}
+                              style={{
+                                padding: "8px 12px",
+                                fontSize: "13px",
+                                cursor: "pointer",
+                                backgroundColor: selectedTimezone === tz.value ? "#f0faf0" : "transparent",
+                                color: selectedTimezone === tz.value ? "#008060" : "#333",
+                                fontWeight: selectedTimezone === tz.value ? "600" : "normal",
+                              }}
+                              onMouseEnter={(e: any) => {
+                                if (selectedTimezone !== tz.value) {
+                                  e.currentTarget.style.backgroundColor = "#f6f6f7";
+                                }
+                              }}
+                              onMouseLeave={(e: any) => {
+                                if (selectedTimezone !== tz.value) {
+                                  e.currentTarget.style.backgroundColor = "transparent";
+                                }
+                              }}
+                            >
+                              {tz.label}
+                            </div>
+                          ))
+                        }
+                      </div>
                     </div>
-                  ) : (
-                    <s-text color="subdued">Closed</s-text>
                   )}
                 </div>
-              );
-            })}
+
+                {/* Business Hours Days */}
+                {DAYS.map((day) => {
+                  const dayHours = businessHours[day as keyof typeof DEFAULT_HOURS] || { open: false, start: "09:00", end: "17:00" };
+                  const isDayOpen = dayHours.open;
+                  const capitalizedDay = day.charAt(0).toUpperCase() + day.slice(1);
+                  
+                  return (
+                    <div
+                      key={day}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "16px",
+                        padding: "12px 0",
+                        borderBottom: day === "sunday" ? "none" : "1px solid #e1e3e5",
+                        opacity: isDayOpen ? 1 : 0.6,
+                        transition: "opacity 0.2s ease",
+                      }}
+                    >
+                      <div style={{ width: "100px", fontWeight: "500" }}>{capitalizedDay}</div>
+                      <s-checkbox
+                        {...({
+                          checked: isDayOpen,
+                          onChange: (e: any) => updateDay(day, "open", e.target.checked),
+                          label: "Open",
+                        } as any)}
+                      />
+                      {isDayOpen ? (
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <input
+                            type="time"
+                            value={dayHours.start}
+                            onChange={(e) => updateDay(day, "start", e.target.value)}
+                            style={{ padding: "6px 10px", borderRadius: "6px", border: "1px solid #c9cccf", fontSize: "14px", fontFamily: "inherit" }}
+                          />
+                          <s-text color="subdued">to</s-text>
+                          <input
+                            type="time"
+                            value={dayHours.end}
+                            onChange={(e) => updateDay(day, "end", e.target.value)}
+                            style={{ padding: "6px 10px", borderRadius: "6px", border: "1px solid #c9cccf", fontSize: "14px", fontFamily: "inherit" }}
+                          />
+                        </div>
+                      ) : (
+                        <s-text color="subdued">Closed</s-text>
+                      )}
+                    </div>
+                  );
+                })}
+              </>
+            )}
           </div>
 
           <div>
