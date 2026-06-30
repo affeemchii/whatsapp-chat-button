@@ -224,7 +224,10 @@
     
     if (btn && popup) {
       btn.addEventListener('click', function(e) {
-        var shouldShowPopup = {{ block.settings.show_popup | json }} || btn.getAttribute('data-offline') === 'true';
+        var isOffline = btn.getAttribute('data-offline') === 'true';
+        var shouldShowPopup = isOffline 
+          ? {{ block.settings.show_offline_popup | json }}
+          : {{ block.settings.show_popup | json }};
         if (shouldShowPopup) {
           e.preventDefault();
           var isShowing = popup.style.display === 'block';
@@ -277,10 +280,10 @@
           var popupMsgEl = document.querySelector('#whatsapp-popup-{{ block.id }} [data-popup-message]');
           var popupBtnTextEl = document.querySelector('#whatsapp-popup-{{ block.id }} [data-popup-button-text]');
           if (popupMsgEl) {
-            popupMsgEl.textContent = "{{ block.settings.offline_message | escape }}";
+            popupMsgEl.textContent = {{ block.settings.offline_message | json }};
           }
           if (popupBtnTextEl) {
-            popupBtnTextEl.textContent = "{{ block.settings.offline_button_text | escape }}";
+            popupBtnTextEl.textContent = {{ block.settings.offline_button_text | json }};
           }
         }
       })
@@ -391,13 +394,20 @@
       "type": "textarea",
       "label": "Offline Message",
       "info": "Shown when customers click the button outside business hours",
-      "default": "We're currently unavailable. Leave us a message on WhatsApp and we'll get back to you as soon as we're online!"
+      "default": "We're offline right now, but leave us a message and we'll reply soon!"
     },
     {
       "id": "offline_button_text",
       "type": "text",
       "label": "Offline Chat Button Text",
       "default": "Leave a Message"
+    },
+    {
+      "id": "show_offline_popup",
+      "type": "checkbox",
+      "label": "Show Popup When Offline",
+      "info": "If turned off, clicking the button outside business hours opens WhatsApp directly without showing a popup",
+      "default": true
     },
     {
       "id": "popup_avatar_emoji",
