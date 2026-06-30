@@ -8,6 +8,11 @@ export const schema: GadgetModel = {
   storageKey: "JDQTfOyNb4EJ",
   fields: {
     businessHours: { type: "json", storageKey: "lcZy_gqv0oIa" },
+    businessHoursEnabled: {
+      type: "boolean",
+      default: false,
+      storageKey: "zWn3Pb9IayNz",
+    },
     buttonColor: {
       type: "string",
       default: "#25D366 ",
@@ -28,6 +33,7 @@ export const schema: GadgetModel = {
       parent: { model: "shopifyShop" },
       storageKey: "ptCKudpydPqT",
     },
+    timezone: { type: "string", storageKey: "kqIY2lli63nv" },
     whatsappNumber: { type: "string", storageKey: "VSYY2dHn0VcP" },
   },
 };
