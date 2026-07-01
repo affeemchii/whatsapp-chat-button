@@ -208,7 +208,7 @@
           flex-direction: column;
           text-align: left;
         ">
-          <div style="color: white; font-weight: 600; font-size: 13px; font-family: inherit;">
+          <div data-popup-greeting="true" style="color: white; font-weight: 600; font-size: 13px; font-family: inherit;">
             {{ block.settings.popup_greeting | escape }}
           </div>
           <div style="color: rgba(255,255,255,0.8); font-size: 11px; font-family: inherit;">
@@ -264,9 +264,94 @@
     var popup = document.getElementById('whatsapp-popup-{{ block.id }}');
     var closeBtn = document.getElementById('whatsapp-popup-close-{{ block.id }}');
     
+    function showAgentPicker(btn, popup) {
+      var agents = [];
+      try {
+        agents = JSON.parse(btn.getAttribute('data-agents') || '[]');
+      } catch(e) { return; }
+      
+      if (agents.length === 0) return;
+      
+      // Build agent picker popup content
+      var popupMsgEl = popup.querySelector('[data-popup-message]');
+      var popupBtnEl = popup.querySelector('a[href]');
+      var popupHeader = popup.querySelector('[data-popup-greeting]') || popup.querySelector('div > div > div:first-child');
+      
+      // Update popup message area with agent list
+      if (popupMsgEl) {
+        popupMsgEl.innerHTML = '';
+        
+        // Create agent list
+        agents.forEach(function(agent) {
+          var agentBtn = document.createElement('a');
+          var cleanPhone = agent.countryCode + agent.phone.replace(/[\s\-\(\)\+]/g, '');
+          agentBtn.href = 'https://wa.me/' + cleanPhone;
+          agentBtn.target = '_blank';
+          agentBtn.rel = 'noopener noreferrer';
+          agentBtn.style.cssText = 'display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; border: 1px solid #e1e3e5; margin-bottom: 8px; text-decoration: none; color: #333; transition: background 0.15s;';
+          
+          // Avatar circle with initial
+          var avatar = document.createElement('div');
+          avatar.style.cssText = 'width: 36px; height: 36px; border-radius: 50%; background: #25D366; color: white; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0; font-family: -apple-system, sans-serif;';
+          avatar.textContent = agent.name.charAt(0).toUpperCase();
+          
+          // Agent info
+          var info = document.createElement('div');
+          info.style.cssText = 'flex: 1;';
+          
+          var nameEl = document.createElement('div');
+          nameEl.style.cssText = 'font-weight: 600; font-size: 13px; font-family: -apple-system, sans-serif;';
+          nameEl.textContent = agent.name;
+          
+          var roleEl = document.createElement('div');
+          roleEl.style.cssText = 'font-size: 11px; color: #6d7175; font-family: -apple-system, sans-serif;';
+          roleEl.textContent = agent.role || 'WhatsApp Chat';
+          
+          // Arrow
+          var arrow = document.createElement('div');
+          arrow.style.cssText = 'color: #6d7175; font-size: 14px;';
+          arrow.textContent = '→';
+          
+          info.appendChild(nameEl);
+          info.appendChild(roleEl);
+          agentBtn.appendChild(avatar);
+          agentBtn.appendChild(info);
+          agentBtn.appendChild(arrow);
+          
+          // Hover effect
+          agentBtn.addEventListener('mouseenter', function() {
+            this.style.backgroundColor = '#f6f6f7';
+          });
+          agentBtn.addEventListener('mouseleave', function() {
+            this.style.backgroundColor = '';
+          });
+          
+          popupMsgEl.appendChild(agentBtn);
+        });
+      }
+      
+      // Hide the main chat button in popup (since agents have their own buttons)
+      if (popupBtnEl) {
+        popupBtnEl.style.display = 'none';
+      }
+      
+      // Show popup
+      popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
+      popup.style.animation = 'whatsapp-popup-appear-{{ block.id }} 0.2s ease-out';
+    }
+
     if (btn && popup) {
       btn.addEventListener('click', function(e) {
         var isOffline = btn.getAttribute('data-offline') === 'true';
+        var isAgentsMode = btn.getAttribute('data-agents-mode') === 'true';
+        
+        // Agents mode takes priority when online
+        if (isAgentsMode && !isOffline) {
+          e.preventDefault();
+          showAgentPicker(btn, popup);
+          return;
+        }
+        
         var shouldShowPopup = isOffline 
           ? {{ block.settings.show_offline_popup | json }}
           : {{ block.settings.show_popup | json }};
@@ -327,6 +412,13 @@
           if (popupBtnTextEl) {
             popupBtnTextEl.textContent = {{ block.settings.offline_button_text | json }};
           }
+        }
+
+        // MULTIPLE AGENTS MODE
+        if (data && data.useMultipleAgents && data.agents && data.agents.length > 0) {
+          // Mark button as agents mode
+          button.setAttribute('data-agents-mode', 'true');
+          button.setAttribute('data-agents', JSON.stringify(data.agents));
         }
       })
       .catch(function() {

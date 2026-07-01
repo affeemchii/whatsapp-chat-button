@@ -82,6 +82,8 @@ export default async function route({ request, reply, api, logger }: RouteContex
     const businessHours = (settings as any).businessHours;
     const businessHoursEnabled = (settings as any).businessHoursEnabled === true;
     const storeIsOpen = (businessHoursEnabled && businessHours) ? isStoreOpen(businessHours, timezone) : true;
+    const useMultipleAgents = (settings as any).useMultipleAgents === true;
+    const agents = (settings as any).agents || [];
 
     await reply.send({
       isEnabled: settings.isEnabled,
@@ -89,7 +91,9 @@ export default async function route({ request, reply, api, logger }: RouteContex
       buttonColor: settings.buttonColor,
       buttonPosition: settings.buttonPosition,
       isOpen: storeIsOpen,
-      timezone: timezone
+      timezone: timezone,
+      useMultipleAgents: useMultipleAgents,
+      agents: agents
     });
   } catch (error) {
     logger.error({ error }, "Error serving WhatsApp settings");
