@@ -1,4 +1,46 @@
-{% if block.settings.whatsapp_number != blank %}
+{% assign show_on_this_page = true %}
+{% if block.settings.page_visibility_mode == 'include' or block.settings.page_visibility_mode == 'exclude' %}
+  {% assign page_is_selected = false %}
+  {% if request.page_type == 'index' and block.settings.show_on_home %}
+    {% assign page_is_selected = true %}
+  {% endif %}
+  {% if request.page_type == 'product' and block.settings.show_on_product %}
+    {% assign page_is_selected = true %}
+  {% endif %}
+  {% if request.page_type == 'collection' and block.settings.show_on_collection %}
+    {% assign page_is_selected = true %}
+  {% endif %}
+  {% if request.page_type == 'cart' and block.settings.show_on_cart %}
+    {% assign page_is_selected = true %}
+  {% endif %}
+  {% if request.page_type == 'blog' and block.settings.show_on_blog %}
+    {% assign page_is_selected = true %}
+  {% endif %}
+  {% if request.page_type == 'article' and block.settings.show_on_article %}
+    {% assign page_is_selected = true %}
+  {% endif %}
+  {% if request.page_type == 'search' and block.settings.show_on_search %}
+    {% assign page_is_selected = true %}
+  {% endif %}
+  {% if request.page_type == 'page' and block.settings.show_on_other %}
+    {% assign page_is_selected = true %}
+  {% endif %}
+  {% if request.page_type == '404' and block.settings.show_on_other %}
+    {% assign page_is_selected = true %}
+  {% endif %}
+
+  {% if block.settings.page_visibility_mode == 'include' %}
+    {% assign show_on_this_page = page_is_selected %}
+  {% elsif block.settings.page_visibility_mode == 'exclude' %}
+    {% if page_is_selected %}
+      {% assign show_on_this_page = false %}
+    {% else %}
+      {% assign show_on_this_page = true %}
+    {% endif %}
+  {% endif %}
+{% endif %}
+
+{% if block.settings.whatsapp_number != blank and show_on_this_page %}
   {% comment %} 3. LIQUID/HTML OUTPUT: Normalize the phone number and construct URL {% endcomment %}
   {% assign raw_number = block.settings.whatsapp_number | remove: ' ' | remove: '-' | remove: '(' | remove: ')' | remove: '+' %}
   {% assign country_code_parts = block.settings.country_code | split: '-' %}
@@ -526,6 +568,69 @@
       "type": "checkbox",
       "label": "Hide on Desktop",
       "default": false
+    },
+    {
+      "type": "header",
+      "content": "Page Visibility"
+    },
+    {
+      "id": "page_visibility_mode",
+      "type": "select",
+      "label": "Show button on",
+      "options": [
+        { "value": "all", "label": "All pages" },
+        { "value": "include", "label": "Only selected pages" },
+        { "value": "exclude", "label": "All pages except selected" }
+      ],
+      "default": "all"
+    },
+    {
+      "id": "show_on_home",
+      "type": "checkbox",
+      "label": "Home page",
+      "default": true
+    },
+    {
+      "id": "show_on_product",
+      "type": "checkbox",
+      "label": "Product pages",
+      "default": true
+    },
+    {
+      "id": "show_on_collection",
+      "type": "checkbox",
+      "label": "Collection pages",
+      "default": true
+    },
+    {
+      "id": "show_on_cart",
+      "type": "checkbox",
+      "label": "Cart page",
+      "default": true
+    },
+    {
+      "id": "show_on_blog",
+      "type": "checkbox",
+      "label": "Blog pages",
+      "default": true
+    },
+    {
+      "id": "show_on_article",
+      "type": "checkbox",
+      "label": "Article pages",
+      "default": true
+    },
+    {
+      "id": "show_on_search",
+      "type": "checkbox",
+      "label": "Search page",
+      "default": true
+    },
+    {
+      "id": "show_on_other",
+      "type": "checkbox",
+      "label": "Other pages (About, Contact, etc)",
+      "default": true
     },
     {
       "type": "header",
