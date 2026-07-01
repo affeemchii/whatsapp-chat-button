@@ -558,6 +558,41 @@ export default function Index() {
         </div>
       </s-section>
 
+      <s-section>
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+          <div style={{ fontWeight: "700", fontSize: "16px" }}>Page Visibility</div>
+          <div style={{ fontSize: "13px", color: "#6d7175" }}>
+            Control which pages show the WhatsApp button from the theme editor.
+          </div>
+          <div style={{
+            backgroundColor: "#f0f8ff",
+            border: "1px solid #b3d9ff",
+            borderRadius: "8px",
+            padding: "12px 16px",
+            fontSize: "13px",
+            color: "#0066cc",
+            lineHeight: "1.6"
+          }}>
+            <strong>How to set page visibility:</strong><br/>
+            Open Theme Editor → App Embeds → WhatsApp Chat Button → 
+            Page Visibility section → Choose "Only selected pages" or 
+            "All pages except selected" → Check the pages you want.
+          </div>
+          <s-button
+            onClick={() => {
+              if (shop?.myshopifyDomain) {
+                window.open(
+                  `https://${shop.myshopifyDomain}/admin/themes/current/editor?context=apps&activateAppId=0aebc762ec32a1a6c5830ce84dc4dc10/whatsapp_button`,
+                  '_blank'
+                );
+              }
+            }}
+          >
+            Open Theme Editor
+          </s-button>
+        </div>
+      </s-section>
+
       {/* Business Hours Section */}
       <s-section>
         <div style={{ marginTop: "16px", marginBottom: "32px" }}>

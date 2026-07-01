@@ -285,7 +285,12 @@
         agents.forEach(function(agent) {
           var agentBtn = document.createElement('a');
           var cleanPhone = agent.countryCode + agent.phone.replace(/[\s\-\(\)\+]/g, '');
-          agentBtn.href = 'https://wa.me/' + cleanPhone;
+          var preFilledMsg = {{ block.settings.pre_filled_message | json }};
+          var waUrl = 'https://wa.me/' + cleanPhone;
+          if (preFilledMsg && preFilledMsg.trim() !== '') {
+            waUrl += '?text=' + encodeURIComponent(preFilledMsg);
+          }
+          agentBtn.href = waUrl;
           agentBtn.target = '_blank';
           agentBtn.rel = 'noopener noreferrer';
           agentBtn.style.cssText = 'display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; border: 1px solid #e1e3e5; margin-bottom: 8px; text-decoration: none; color: #333; transition: background 0.15s;';
