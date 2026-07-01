@@ -88,6 +88,43 @@ const TIMEZONES = [
   { value: "UTC", label: "UTC (UTC+00:00)" }
 ];
 
+const AGENT_COUNTRY_CODES = [
+  { value: "1", label: "🇺🇸 +1" },
+  { value: "44", label: "🇬🇧 +44" },
+  { value: "92", label: "🇵🇰 +92" },
+  { value: "91", label: "🇮🇳 +91" },
+  { value: "971", label: "🇦🇪 +971" },
+  { value: "966", label: "🇸🇦 +966" },
+  { value: "974", label: "🇶🇦 +974" },
+  { value: "965", label: "🇰🇼 +965" },
+  { value: "973", label: "🇧🇭 +973" },
+  { value: "968", label: "🇴🇲 +968" },
+  { value: "61", label: "🇦🇺 +61" },
+  { value: "49", label: "🇩🇪 +49" },
+  { value: "33", label: "🇫🇷 +33" },
+  { value: "55", label: "🇧🇷 +55" },
+  { value: "52", label: "🇲🇽 +52" },
+  { value: "60", label: "🇲🇾 +60" },
+  { value: "65", label: "🇸🇬 +65" },
+  { value: "62", label: "🇮🇩 +62" },
+  { value: "63", label: "🇵🇭 +63" },
+  { value: "66", label: "🇹🇭 +66" },
+  { value: "880", label: "🇧🇩 +880" },
+  { value: "94", label: "🇱🇰 +94" },
+  { value: "20", label: "🇪🇬 +20" },
+  { value: "27", label: "🇿🇦 +27" },
+  { value: "234", label: "🇳🇬 +234" },
+  { value: "90", label: "🇹🇷 +90" }
+];
+
+type Agent = {
+  id: string;
+  name: string;
+  role: string;
+  phone: string;
+  countryCode: string;
+};
+
 export default function Index() {
   const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
 
@@ -109,6 +146,10 @@ export default function Index() {
   const [hoursSaved, setHoursSaved] = useState(false);
   const [hoursSaveError, setHoursSaveError] = useState<string | null>(null);
 
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [agentsSaved, setAgentsSaved] = useState(false);
+  const [agentsSaveError, setAgentsSaveError] = useState<string | null>(null);
+
   const [{ data: shop, fetching: loadingShop, error: shopError }] = useFindFirst(api.shopifyShop);
   const [{ data: settings, fetching: loadingSettings, error: settingsError }] = useFindFirst(api.shopSetting);
 
@@ -125,6 +166,9 @@ export default function Index() {
       (settings as any)?.timezone || shop?.ianaTimezone || "UTC"
     );
     setBusinessHoursEnabled((settings as any)?.businessHoursEnabled === true);
+    if (settings?.agents) {
+      setAgents(settings.agents as Agent[]);
+    }
   }, [settings, shop]);
 
   useEffect(() => {
@@ -169,6 +213,48 @@ export default function Index() {
       setHoursSaved(true);
     } catch (err: any) {
       setHoursSaveError(err.message || "Failed to save business hours");
+    }
+  };
+
+  const addAgent = () => {
+    const newAgent: Agent = {
+      id: Date.now().toString(),
+      name: "",
+      role: "",
+      phone: "",
+      countryCode: "92"
+    };
+    setAgents(prev => [...prev, newAgent]);
+  };
+
+  const updateAgent = (id: string, field: keyof Agent, value: string) => {
+    setAgents(prev => prev.map(a => a.id === id ? { ...a, [field]: value } : a));
+  };
+
+  const removeAgent = (id: string) => {
+    setAgents(prev => prev.filter(a => a.id !== id));
+  };
+
+  const handleSaveAgents = async () => {
+    setAgentsSaved(false);
+    setAgentsSaveError(null);
+    try {
+      if (settings?.id) {
+        await updateSetting({
+          id: settings.id,
+          shopSetting: { agents } as any,
+        });
+      } else if (shop?.id) {
+        await createSetting({
+          shopSetting: {
+            agents,
+            shop: { _link: shop.id },
+          } as any,
+        });
+      }
+      setAgentsSaved(true);
+    } catch (err: any) {
+      setAgentsSaveError(err.message || "Failed to save agents");
     }
   };
 
@@ -689,6 +775,176 @@ export default function Index() {
               {isSaving ? "Saving..." : "Save Business Hours"}
             </s-button>
           </div>
+        </div>
+      </s-section>
+
+      <s-section>
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          
+          {/* Header */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div>
+              <div style={{ fontWeight: "700", fontSize: "16px" }}>Team Agents</div>
+              <div style={{ color: "#6d7175", fontSize: "13px", marginTop: "2px" }}>
+                Add multiple WhatsApp contacts. Customers will pick who to chat with.
+              </div>
+            </div>
+            <s-button onClick={addAgent} disabled={agents.length >= 5}>
+              + Add Agent
+            </s-button>
+          </div>
+
+          {/* Agent limit note */}
+          <div style={{ fontSize: "12px", color: "#6d7175" }}>
+            Maximum 5 agents. {agents.length}/5 added.
+          </div>
+
+          {/* Agent list */}
+          {agents.length === 0 && (
+            <div style={{
+              padding: "32px",
+              textAlign: "center",
+              backgroundColor: "#f6f6f7",
+              borderRadius: "8px",
+              color: "#6d7175",
+              fontSize: "14px"
+            }}>
+              No agents added yet. Click "+ Add Agent" to get started.
+            </div>
+          )}
+
+          {agents.map((agent, index) => (
+            <div key={agent.id} style={{
+              border: "1px solid #e1e3e5",
+              borderRadius: "8px",
+              padding: "16px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "12px",
+              backgroundColor: "white"
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ fontWeight: "600", fontSize: "14px", color: "#333" }}>
+                  Agent {index + 1}
+                </div>
+                <button
+                  onClick={() => removeAgent(agent.id)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#d72c0d",
+                    cursor: "pointer",
+                    fontSize: "13px",
+                    padding: "4px 8px",
+                    borderRadius: "4px"
+                  }}
+                >
+                  Remove
+                </button>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <div>
+                  <label style={{ fontSize: "13px", fontWeight: "500", display: "block", marginBottom: "4px" }}>
+                    Name *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. John Smith"
+                    value={agent.name}
+                    onChange={(e: any) => updateAgent(agent.id, "name", e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "8px 10px",
+                      borderRadius: "6px",
+                      border: "1px solid #c9cccf",
+                      fontSize: "13px",
+                      boxSizing: "border-box" as const
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: "13px", fontWeight: "500", display: "block", marginBottom: "4px" }}>
+                    Role / Department
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Sales, Support"
+                    value={agent.role}
+                    onChange={(e: any) => updateAgent(agent.id, "role", e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "8px 10px",
+                      borderRadius: "6px",
+                      border: "1px solid #c9cccf",
+                      fontSize: "13px",
+                      boxSizing: "border-box" as const
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: "13px", fontWeight: "500", display: "block", marginBottom: "4px" }}>
+                  WhatsApp Number *
+                </label>
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <select
+                    value={agent.countryCode}
+                    onChange={(e: any) => updateAgent(agent.id, "countryCode", e.target.value)}
+                    style={{
+                      padding: "8px",
+                      borderRadius: "6px",
+                      border: "1px solid #c9cccf",
+                      fontSize: "13px",
+                      backgroundColor: "white"
+                    }}
+                  >
+                    {AGENT_COUNTRY_CODES.map(cc => (
+                      <option key={cc.value} value={cc.value}>{cc.label}</option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    placeholder="3001234567"
+                    value={agent.phone}
+                    onChange={(e: any) => updateAgent(agent.id, "phone", e.target.value)}
+                    style={{
+                      flex: 1,
+                      padding: "8px 10px",
+                      borderRadius: "6px",
+                      border: "1px solid #c9cccf",
+                      fontSize: "13px"
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {/* Success/Error banners */}
+          {agentsSaved && (
+            <s-banner tone="success" heading="Saved">
+              Agents saved successfully!
+            </s-banner>
+          )}
+          {agentsSaveError && (
+            <s-banner tone="critical" heading="Error">
+              {agentsSaveError}
+            </s-banner>
+          )}
+
+          {/* Save button */}
+          <div>
+            <s-button
+              variant="primary"
+              onClick={handleSaveAgents}
+              disabled={isSaving}
+            >
+              {isSaving ? "Saving..." : "Save Agents"}
+            </s-button>
+          </div>
+
         </div>
       </s-section>
     </s-page>
