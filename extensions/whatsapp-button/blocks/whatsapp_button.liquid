@@ -265,6 +265,11 @@
     var closeBtn = document.getElementById('whatsapp-popup-close-{{ block.id }}');
     
     function showAgentPicker(btn, popup) {
+      if (typeof trackClick === 'function') {
+        trackClick();
+      } else if (window.trackClick) {
+        window.trackClick();
+      }
       var agents = [];
       try {
         agents = JSON.parse(btn.getAttribute('data-agents') || '[]');
@@ -347,6 +352,11 @@
 
     if (btn && popup) {
       btn.addEventListener('click', function(e) {
+        if (typeof trackClick === 'function') {
+          trackClick();
+        } else if (window.trackClick) {
+          window.trackClick();
+        }
         var isOffline = btn.getAttribute('data-offline') === 'true';
         var isAgentsMode = btn.getAttribute('data-agents-mode') === 'true';
         
@@ -390,6 +400,22 @@
 
   (function() {
     var button = document.getElementById('whatsapp-btn-{{ block.id }}');
+    
+    function trackClick() {
+      var deviceType = /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop';
+      fetch('https://whatsapp-chat-button--development.gadget.app/track-click', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          shop: "{{ shop.permanent_domain }}",
+          pageUrl: window.location.href,
+          pageType: "{{ request.page_type }}",
+          deviceType: deviceType
+        })
+      }).catch(function() {});
+    }
+    window.trackClick = trackClick;
+
     var apiUrl = "https://whatsapp-chat-button--development.gadget.app/whatsapp-settings?shop=" + encodeURIComponent("{{ shop.permanent_domain }}");
     
     fetch(apiUrl)
