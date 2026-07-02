@@ -7,6 +7,7 @@ export const schema: GadgetModel = {
   type: "gadget/model-schema/v2",
   storageKey: "JDQTfOyNb4EJ",
   fields: {
+    agents: { type: "json", storageKey: "OIEEIFGRR_x9" },
     businessHours: { type: "json", storageKey: "lcZy_gqv0oIa" },
     businessHoursEnabled: {
       type: "boolean",
@@ -34,6 +35,11 @@ export const schema: GadgetModel = {
       storageKey: "ptCKudpydPqT",
     },
     timezone: { type: "string", storageKey: "kqIY2lli63nv" },
+    useMultipleAgents: {
+      type: "boolean",
+      default: false,
+      storageKey: "VgyGzu1pgyot",
+    },
     whatsappNumber: { type: "string", storageKey: "VSYY2dHn0VcP" },
   },
 };

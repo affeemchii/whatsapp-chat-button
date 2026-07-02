@@ -15,3 +15,6 @@ api_version = "2026-04"
 compliance_topics = [ "customers/data_request", "customers/redact", "shop/redact" ]
 uri = "https://webhooks.gadget-services.net/shopify/v1?domain=whatsapp-chat-button.gadget.app"
 topics = [ "shop/update", "app/uninstalled" ]
+
+[access_scopes]
+scopes = "write_script_tags"
