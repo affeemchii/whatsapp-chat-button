@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useFindFirst, useAction } from "@gadgetinc/react";
+import { useFindFirst, useAction, useFindMany } from "@gadgetinc/react";
 import { api } from "../api";
 
 const TIMEZONES = [
@@ -153,6 +153,41 @@ export default function Index() {
 
   const [{ data: shop, fetching: loadingShop, error: shopError }] = useFindFirst(api.shopifyShop);
   const [{ data: settings, fetching: loadingSettings, error: settingsError }] = useFindFirst(api.shopSetting);
+
+  const [{ data: clicks, fetching: loadingClicks }] = useFindMany(
+    api.buttonClick,
+    {
+      sort: { createdAt: "Descending" },
+      first: 100
+    }
+  );
+
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const weekStart = new Date(todayStart);
+  weekStart.setDate(weekStart.getDate() - 6);
+
+  const totalClicks = clicks?.length || 0;
+  const todayClicks = clicks?.filter(c => new Date(c.createdAt) >= todayStart).length || 0;
+  const weekClicks = clicks?.filter(c => new Date(c.createdAt) >= weekStart).length || 0;
+  const mobileClicks = clicks?.filter(c => c.deviceType === 'mobile').length || 0;
+  const desktopClicks = clicks?.filter(c => c.deviceType === 'desktop').length || 0;
+
+  // Build last 7 days data
+  const last7Days = Array.from({ length: 7 }, (_, i) => {
+    const date = new Date(todayStart);
+    date.setDate(date.getDate() - (6 - i));
+    const dayClicks = clicks?.filter(c => {
+      const clickDate = new Date(c.createdAt);
+      return clickDate >= date && clickDate < new Date(date.getTime() + 86400000);
+    }).length || 0;
+    return {
+      label: date.toLocaleDateString('en-US', { weekday: 'short' }),
+      count: dayClicks
+    };
+  });
+
+  const maxDayClicks = Math.max(...last7Days.map(d => d.count), 1);
 
   const [{ fetching: updatingHours }, updateSetting] = useAction(api.shopSetting.update);
   const [{ fetching: creatingHours }, createSetting] = useAction(api.shopSetting.create);
@@ -439,6 +474,175 @@ export default function Index() {
               </s-text>
             </div>
           </div>
+        </div>
+      </s-section>
+
+      <s-section>
+        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+          
+          {/* Header */}
+          <div>
+            <div style={{ fontWeight: "700", fontSize: "16px" }}>Analytics</div>
+            <div style={{ color: "#6d7175", fontSize: "13px", marginTop: "2px" }}>
+              Track how customers interact with your WhatsApp button
+            </div>
+          </div>
+
+          {loadingClicks ? (
+            <div style={{ textAlign: "center", padding: "32px", color: "#6d7175" }}>
+              Loading analytics...
+            </div>
+          ) : (
+            <>
+              {/* Stats cards row */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "12px" }}>
+                {[
+                  { label: "Total Clicks", value: totalClicks, color: "#008060" },
+                  { label: "This Week", value: weekClicks, color: "#0070c4" },
+                  { label: "Today", value: todayClicks, color: "#9c6ade" },
+                  { label: "Mobile", value: totalClicks > 0 ? Math.round((mobileClicks / totalClicks) * 100) + "%" : "0%", color: "#e67e22" }
+                ].map(stat => (
+                  <div key={stat.label} style={{
+                    backgroundColor: "white",
+                    border: "1px solid #e1e3e5",
+                    borderRadius: "8px",
+                    padding: "16px",
+                    textAlign: "center"
+                  }}>
+                    <div style={{ fontSize: "24px", fontWeight: "700", color: stat.color }}>
+                      {stat.value}
+                    </div>
+                    <div style={{ fontSize: "12px", color: "#6d7175", marginTop: "4px" }}>
+                      {stat.label}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Bar chart - last 7 days */}
+              <div style={{
+                backgroundColor: "white",
+                border: "1px solid #e1e3e5",
+                borderRadius: "8px",
+                padding: "16px"
+              }}>
+                <div style={{ fontWeight: "600", fontSize: "14px", marginBottom: "16px" }}>
+                  Last 7 Days
+                </div>
+                <div style={{ display: "flex", alignItems: "flex-end", gap: "8px", height: "120px" }}>
+                  {last7Days.map(day => (
+                    <div key={day.label} style={{
+                      flex: 1,
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: "4px",
+                      height: "100%",
+                      justifyContent: "flex-end"
+                    }}>
+                      <div style={{ fontSize: "11px", color: "#6d7175" }}>
+                        {day.count > 0 ? day.count : ""}
+                      </div>
+                      <div style={{
+                        width: "100%",
+                        backgroundColor: "#008060",
+                        borderRadius: "4px 4px 0 0",
+                        height: `${Math.max((day.count / maxDayClicks) * 90, day.count > 0 ? 4 : 0)}px`,
+                        minHeight: day.count > 0 ? "4px" : "0",
+                        transition: "height 0.3s ease"
+                      }} />
+                      <div style={{ fontSize: "11px", color: "#6d7175" }}>{day.label}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Device breakdown */}
+              <div style={{
+                backgroundColor: "white",
+                border: "1px solid #e1e3e5",
+                borderRadius: "8px",
+                padding: "16px",
+                display: "flex",
+                gap: "24px",
+                alignItems: "center"
+              }}>
+                <div style={{ fontWeight: "600", fontSize: "14px" }}>Device Breakdown</div>
+                <div style={{ display: "flex", gap: "16px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <div style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: "#0070c4" }} />
+                    <span style={{ fontSize: "13px" }}>Desktop: {desktopClicks}</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <div style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: "#e67e22" }} />
+                    <span style={{ fontSize: "13px" }}>Mobile: {mobileClicks}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Recent clicks */}
+              {clicks && clicks.length > 0 && (
+                <div style={{
+                  backgroundColor: "white",
+                  border: "1px solid #e1e3e5",
+                  borderRadius: "8px",
+                  padding: "16px"
+                }}>
+                  <div style={{ fontWeight: "600", fontSize: "14px", marginBottom: "12px" }}>
+                    Recent Clicks
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
+                    {clicks.slice(0, 5).map((click, index) => (
+                      <div key={click.id} style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        padding: "10px 0",
+                        borderBottom: index < 4 ? "1px solid #f1f1f1" : "none",
+                        fontSize: "13px"
+                      }}>
+                        <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                          <span style={{
+                            backgroundColor: click.deviceType === 'mobile' ? "#fff4ed" : "#f0f8ff",
+                            color: click.deviceType === 'mobile' ? "#e67e22" : "#0070c4",
+                            padding: "2px 8px",
+                            borderRadius: "12px",
+                            fontSize: "11px",
+                            fontWeight: "500"
+                          }}>
+                            {click.deviceType === 'mobile' ? '📱 Mobile' : '💻 Desktop'}
+                          </span>
+                          <span style={{ color: "#6d7175" }}>
+                            {click.pageType || 'unknown'} page
+                          </span>
+                        </div>
+                        <div style={{ color: "#6d7175", fontSize: "12px" }}>
+                          {new Date(click.createdAt).toLocaleDateString('en-US', {
+                            month: 'short', day: 'numeric',
+                            hour: '2-digit', minute: '2-digit'
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {totalClicks === 0 && (
+                <div style={{
+                  textAlign: "center",
+                  padding: "32px",
+                  backgroundColor: "#f6f6f7",
+                  borderRadius: "8px",
+                  color: "#6d7175",
+                  fontSize: "14px"
+                }}>
+                  No clicks recorded yet. Clicks will appear here after customers 
+                  interact with your WhatsApp button.
+                </div>
+              )}
+            </>
+          )}
         </div>
       </s-section>
 
